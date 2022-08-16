@@ -13,4 +13,8 @@
   background-color: rgb(226, 224, 224);
   cursor: pointer;
 }
+.app-img
+{
+  width: 300px;
+}
 
