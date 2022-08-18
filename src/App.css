@@ -2,9 +2,9 @@
   margin-top: 120px;
   text-align: center;
 }
-.app-btn-submit
-{
-  padding: 8px;
+
+.app-btn-submit {
+  padding: 4px 8px;
   border: 1px solid rgb(213, 213, 213);
   width: 6%;
   display: flex;
@@ -12,9 +12,36 @@
   margin: 24px auto;
   background-color: rgb(226, 224, 224);
   cursor: pointer;
+  border-radius: 2px;
 }
-.app-img
-{
+
+.app-img {
   width: 300px;
 }
 
+.app-btn-down {
+  padding: 2px;
+  background-color: rgb(226, 224, 224);
+  border-radius: 2px;
+  cursor: pointer;
+  width: 10%;
+  display: flex;
+  justify-content: center;
+  margin-right: 16px;
+}
+
+.app-btn-dele {
+  padding: 2px;
+  background-color: rgb(226, 224, 224);
+  border-radius: 2px;
+  cursor: pointer;
+  width: 10%;
+  display: flex;
+  justify-content: center;
+  
+}
+.btn-wrap
+{
+  display: flex;
+  justify-content: center;
+}

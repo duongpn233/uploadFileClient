@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import axios from 'axios';
 import queryString from 'query-string';
+import { save } from 'save-file';
 import './App.css';
 
 function App() {
   const [files, setFiles] = useState([]);
   const [urlImgs, setUrlImg] = useState([]);
   const [urlDowns, setUrlDown] = useState([]);
+  const [listFile, setListFile] = useState([]);
 
   const handleFiles = (e) => {
     console.log(e.target.files)
@@ -38,7 +40,7 @@ function App() {
         });
         const url = res.data.slice(0, res.data.indexOf('?'));
         console.log(url)
-        if (files[i].type.includes("image")) {
+        if (files[i].type === "image/jpeg") {
           urls.push(url);
         }
         else {
@@ -51,26 +53,22 @@ function App() {
     setFiles([]);
   };
 
-  // const handleDown = async () => {
-  //   const axiosCl = axios.create();
-  //   const res = await axiosCl.get(`http://localhost:5000/down-sign-s3?file-name=${'test.txt'}&file-type=${'text/plain'}`);
-  //   console.log(res.data)
-  //   if (res.data) {
-  //     const data = await axiosCl.get(res.data, {
-  //       headers: {
-  //         'content-type': 'text/plain',
-  //         'mode': "cors",
-  //         "Access-Control-Allow-Origin": "*",
-  //         "Access-Allow-Control-Headers": "*",
-  //         // "Access-Control-Request-Headers" : "Access-Control-Allow-Origin, Content-Type, Access-Control-Allow-Headers"
-  //       }
-  //     });
-  //     console.log(data)
-  //   }
-  // }
+  const handleDown = async (name) => {
+    const axiosCl = axios.create();
+    const res = await axiosCl.get(`http://localhost:5000/save-file?file-name=${name}`);
+    await save(res.data.data.data, name);
+    console.log(res.data.data.data);
+  };
+
+  const handleDele = async (name) => {
+    const axiosCl = axios.create();
+    const res = await axiosCl.get(`http://localhost:5000/delete-file?file-name=${name}`);
+    console.log(res.data);
+  }
 
   const getNameFile = (url) => {
-    const name = url.slice(url.lastIndexOf('/') + 1, url.length - 1);
+    const name = url.slice(url.lastIndexOf('/') + 1, url.length);
+    console.log(name)
     return name;
   }
 
@@ -84,9 +82,15 @@ function App() {
             return (
               <div className='app-img-wrap' key={id}>
                 <img src={url} alt='' className='app-img'></img>
-                <a className="app-btn-down" target="_blank" download href={url}>
-                  download
-                </a>
+                <div className="btn-wrap">
+                  <div className="app-btn-down" onClick={() => handleDown(getNameFile(url))}>
+                    {`download`}
+                  </div>
+                  <div className="app-btn-dele" onClick={() => handleDele(getNameFile(url))}>
+                    {`delete`}
+                  </div>
+                </div>
+                <br></br>
               </div>
             )
           })
@@ -95,16 +99,20 @@ function App() {
           urlDowns.map((url, id) => {
             return (
               <div key={id}>
-                <a className="app-btn-down" target="_blank" download={getNameFile(url)} href={url}>
-                  {`download: ${getNameFile(url)}`}
-                </a>
+                <div className="btn-wrap">
+                  <div className="app-btn-down" onClick={() => handleDown(getNameFile(url))}>
+                    {`download`}
+                  </div>
+                  <div className="app-btn-dele" onClick={() => handleDele(getNameFile(url))}>
+                    {`delete`}
+                  </div>
+                </div>
                 <br></br>
               </div>
             )
           })
         }
       </div>
-      {/* <div onClick={handleDown}>Download</div> */}
     </div>
   );
 }
