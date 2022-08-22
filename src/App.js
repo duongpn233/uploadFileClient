@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from 'axios';
 import queryString from 'query-string';
-import { save } from 'save-file';
+import { saveAs } from 'file-saver';
 import './App.css';
 
 function App() {
@@ -9,12 +9,13 @@ function App() {
   const [urlImgs, setUrlImg] = useState([]);
   const [urlDowns, setUrlDown] = useState([]);
   const [listFile, setListFile] = useState([]);
+  const [totalSize, setTotalSize] = useState();
 
   const handleFiles = (e) => {
     console.log(e.target.files)
     if (e.target.files[0]) {
       const filesUp = e.target.files;
-      setFiles(filesUp);
+      setFiles([...filesUp]);
     }
   }
 
@@ -53,16 +54,53 @@ function App() {
     setFiles([]);
   };
 
+  const submitFile = async () => {
+    const axiosCl = axios.create();
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formData.append(`file${i}`, files[i]);
+      console.log(files[i])
+    }
+    const res = await axiosCl.post(`http://localhost:5000/up-file-s3`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        "Access-Control-Allow-Origin": "*",
+        "Access-Allow-Control-Headers": "*",
+        // "Access-Control-Request-Headers" : "Access-Control-Allow-Origin, Content-Type, Access-Control-Allow-Headers"
+      }
+    });
+    console.log(res.data);
+  }
+
   const handleDown = async (name) => {
     const axiosCl = axios.create();
-    const res = await axiosCl.get(`http://localhost:5000/save-file?file-name=${name}`);
-    await save(res.data.data.data, name);
-    console.log(res.data.data.data);
+    const res = await axiosCl.get(`http://localhost:5000/save-file?file-name=${name}`, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Allow-Control-Headers": "*",
+        // "Access-Control-Request-Headers" : "Access-Control-Allow-Origin, Content-Type, Access-Control-Allow-Headers"
+      }
+    });
+    console.log(res.data);
+    const blob = new Blob(res.data.data.data);
+    saveAs(blob, name);
   };
 
   const handleDele = async (name) => {
     const axiosCl = axios.create();
-    const res = await axiosCl.get(`http://localhost:5000/delete-file?file-name=${name}`);
+    const res = await axiosCl.get(`http://localhost:5000/delete-file?file-name=${name}`, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Allow-Control-Headers": "*",
+        // "Access-Control-Request-Headers" : "Access-Control-Allow-Origin, Content-Type, Access-Control-Allow-Headers"
+      }
+    });
+    if (res.data) {
+      const newList = listFile.filter((fileName) => {
+        if (name !== fileName) return fileName;
+      });
+      setListFile([...newList]);
+    }
     console.log(res.data);
   }
 
@@ -72,10 +110,28 @@ function App() {
     return name;
   }
 
+  useEffect(() => {
+    async function fecthList() {
+      const axiosCl = axios.create();
+      const res = await axiosCl.get(`http://localhost:5000/get-listfile`, {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Allow-Control-Headers": "*",
+          "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,PATCH"
+          // "Access-Control-Request-Headers" : "Access-Control-Allow-Origin, Content-Type, Access-Control-Allow-Headers"
+        }
+      });
+      const total = await axiosCl.get('http://localhost:5000/get-total-size-bucket');
+      setListFile([...res.data]);
+      setTotalSize(total.data);
+    };
+    fecthList();
+  }, []);
+
   return (
     <div className="App">
       <input className='app-input' type="file" onChange={handleFiles} multiple></input>
-      <div className='app-btn-submit' onClick={handleSubmit}>Submit</div>
+      <div className='app-btn-submit' onClick={submitFile}>Submit</div>
       <div className='app-img-block'>
         {
           urlImgs.map((url, id) => {
@@ -100,6 +156,7 @@ function App() {
             return (
               <div key={id}>
                 <div className="btn-wrap">
+                  <span className="app-file-name">{getNameFile(url)}</span>
                   <div className="app-btn-down" onClick={() => handleDown(getNameFile(url))}>
                     {`download`}
                   </div>
@@ -113,6 +170,25 @@ function App() {
           })
         }
       </div>
+      <div className="app-list">
+        {
+          listFile.map((file, key) => {
+            return (
+              <div className="btn-wrap" key={key}>
+                <span className="app-file-name">{file}</span>
+                <div className="app-btn-down" onClick={() => handleDown(file)}>
+                  {`download`}
+                </div>
+                <div className="app-btn-dele" onClick={() => handleDele(file)}>
+                  {`delete`}
+                </div>
+                <br></br>
+              </div>
+            )
+          })
+        }
+      </div>
+      <div className="app-total-size">Total size bucket: {totalSize} byte</div>
     </div>
   );
 }
